@@ -1,0 +1,9 @@
+[project]
+name = "unflappable-automation"
+version = "0.1.0"
+description = "Reliable Python Workflow"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "tenacity>=9.1.4",
+]
