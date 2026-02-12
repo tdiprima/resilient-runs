@@ -1,5 +1,5 @@
 [project]
-name = "unflappable-automation"
+name = "resilient-runs"
 version = "0.1.0"
 description = "Reliable Python Workflow"
 readme = "README.md"
