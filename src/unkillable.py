@@ -1,23 +1,7 @@
 """
-RESILIENT AUTOMATION TEMPLATE
-
-A template for building unkillable automation scripts that handle:
-- Unstable external resources (APIs, files, network)
-- Persistent state across runs
-- Safe cleanup and error handling
-- Scheduled recurring execution
-
-CUSTOMIZE THIS TEMPLATE:
-1. Modify the database schema for your state tracking needs
-2. Replace fetch_resource() with your actual data source
-3. Add your business logic in the job() function
-4. Adjust retry policies and scheduling intervals
-5. Configure logging handlers (file, email, Sentry, etc.)
+TODO: Describe what your automation does (e.g., "Fetch data from API, process, and email report")
 """
 
-# ============================================================================
-# IMPORTS - Add your dependencies here
-# ============================================================================
 import logging.config
 import sched
 import sqlite3
@@ -28,301 +12,167 @@ from pathlib import Path
 
 from tenacity import retry, stop_after_attempt, wait_fixed
 
-# TODO: Add your imports here (requests, pandas, boto3, etc.)
-
-
 # ============================================================================
-# CONFIGURATION - Customize these values
+# LOGGING SETUP
 # ============================================================================
-
-# Database configuration
-STATE_DB = "automation_state.db"  # TODO: Change DB name for your use case
-
-# Scheduling configuration
-FIRST_RUN_DELAY_SEC = 5  # How long to wait before first run
-RUN_INTERVAL_SEC = 10  # How often to run the job
-MAX_RUNS = 3  # Set to None for infinite runs, or a number for testing
-
-# Retry configuration
-MAX_RETRY_ATTEMPTS = 3  # How many times to retry failed operations
-RETRY_WAIT_SEC = 2  # Seconds to wait between retries
-
-# Processing configuration
-BATCH_SIZE = 10  # TODO: Number of items to process per run
-
-# Output configuration
-OUTPUT_DIR = Path("output")  # TODO: Customize output directory
-REPORT_FILENAME = "summary.txt"  # TODO: Customize report name
-
-
-# ============================================================================
-# LOGGING SETUP - Configure structured logging
-# ============================================================================
-# TODO: Add file handler, email handler, or external logging service
-logging.config.dictConfig(
-    {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": "INFO",
-                "formatter": "default",
-            },
-            # TODO: Add file handler for persistent logs
-            # "file": {
-            #     "class": "logging.FileHandler",
-            #     "filename": "automation.log",
-            #     "level": "DEBUG",
-            #     "formatter": "detailed",
-            # },
-        },
-        "formatters": {
-            "default": {"format": "%(asctime)s - %(levelname)s - %(message)s"},
-            # TODO: Add detailed formatter for debugging
-            # "detailed": {
-            #     "format": "%(asctime)s - %(name)s - %(levelname)s - "
-            #               "%(funcName)s:%(lineno)d - %(message)s"
-            # },
-        },
-        "root": {"handlers": ["console"], "level": "INFO"},
-    }
-)
+logging.config.dictConfig({
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "default",
+        }
+    },
+    "formatters": {
+        "default": {"format": "%(asctime)s - %(levelname)s - %(message)s"}
+    },
+    "root": {"handlers": ["console"], "level": "INFO"},
+})
 logger = logging.getLogger(__name__)
 
-
 # ============================================================================
-# DATABASE SETUP - Persistent state tracking
+# DATABASE SETUP (tracks run history)
 # ============================================================================
-# TODO: Modify schema to track your specific state (last_run_time, last_id, etc.)
+STATE_DB = "automation_state.db"  # TODO: Change DB name if needed
 conn = sqlite3.connect(STATE_DB, check_same_thread=False)
 cur = conn.cursor()
-cur.execute(
-    """
+cur.execute("""
     CREATE TABLE IF NOT EXISTS runs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         status TEXT,
         processed INTEGER,
         failed INTEGER,
         duration_sec REAL
-        -- TODO: Add columns for your use case:
-        -- , timestamp TEXT
-        -- , last_processed_id INTEGER
-        -- , error_message TEXT
     )
-"""
-)
+""")
 conn.commit()
-logger.info(f"SQLite state DB initialized: {STATE_DB}")
-
+logger.info("Database initialized")
 
 # ============================================================================
-# DATA MODELS - Define your result structures
+# DATA STRUCTURES
 # ============================================================================
-# TODO: Add fields relevant to your job results
 @dataclass
 class JobResult:
-    """Results from a single job run."""
     processed: int
     failed: int
     duration_sec: float
-    # TODO: Add your fields:
-    # total_size_bytes: int = 0
-    # api_calls_made: int = 0
-    # records_updated: int = 0
-
+    # TODO: Add any other fields you need (e.g., error_messages, records_updated)
 
 # ============================================================================
-# RESILIENT OPERATIONS - Functions with retry logic
+# CORE FUNCTIONS
 # ============================================================================
-# TODO: Replace this with your actual data fetching/processing function
-@retry(stop=stop_after_attempt(MAX_RETRY_ATTEMPTS), wait=wait_fixed(RETRY_WAIT_SEC))
-def fetch_resource(resource_id: int) -> str:
+
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+def fetch_data(item_id: int) -> str:
     """
-    Fetch a single resource with automatic retries.
+    TODO: Replace this with your actual data fetching logic
+    (API call, file download, database query, etc.)
 
-    TODO: Replace with your actual implementation:
-    - API calls (requests.get, boto3 operations)
-    - File downloads
-    - Database queries
-    - External service calls
+    HINT: This function automatically retries 3 times with 2-second waits
     """
-    # Demo: Simulate occasional failures
-    import random
-    if random.random() < 0.3:  # nosec B311
-        raise ValueError(f"Fetch failed for resource {resource_id}")
-    return f"data_chunk_{resource_id}"
+    # Example: return requests.get(f"https://api.example.com/data/{item_id}").text
+    raise NotImplementedError("Replace with your fetch logic")
 
 
-# TODO: Add more resilient functions here
-# @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-# def process_data(data: str) -> dict:
-#     """Process raw data with exponential backoff retry."""
-#     pass
-#
-# @retry(stop=stop_after_attempt(5), wait=wait_fixed(1))
-# def send_notification(message: str) -> None:
-#     """Send notification with retries."""
-#     pass
+def process_data(data: str) -> str:
+    """
+    TODO: Add your data processing logic here
+    (parse, transform, validate, etc.)
+    """
+    # Example: return json.loads(data)
+    return data
 
 
 # ============================================================================
-# SCHEDULING SETUP
+# MAIN JOB
 # ============================================================================
-run_count = 0
 scheduler = sched.scheduler(time.time, time.sleep)
 
-
-# ============================================================================
-# MAIN JOB FUNCTION - Your core automation logic
-# ============================================================================
 def job():
-    """
-    The main automation job that runs on schedule.
-
-    TODO: Customize this function with your automation logic:
-    1. Fetch data from your sources
-    2. Process/transform the data
-    3. Write results to destination
-    4. Send notifications if needed
-    5. Update state tracking
-    """
-    global run_count
-
-    # Stop after MAX_RUNS (remove this check for infinite runs)
-    if MAX_RUNS is not None and run_count >= MAX_RUNS:
-        logger.info(f"Max runs ({MAX_RUNS}) reached. Exiting scheduler.")
-        return
-
-    run_count += 1
-    logger.info(f"Starting job run #{run_count}")
-
+    """The main automation job that runs on schedule."""
+    logger.info("Starting job")
     start_time = time.time()
     processed = 0
     failed = 0
 
-    # ========================================================================
-    # STEP 1: FETCH & PROCESS DATA (in safe temp directory)
-    # ========================================================================
-    # TODO: Customize the temporary file handling for your needs
+    # Use temp directory for safe file operations
     with tempfile.TemporaryDirectory() as tmpdir:
-        temp_path = Path(tmpdir) / "processed_data.txt"
-        logger.debug(f"Using temp dir: {tmpdir}")
+        temp_path = Path(tmpdir) / "working_data.txt"
 
-        # TODO: Replace this loop with your data processing logic
-        # Examples:
-        # - Fetch from API and process JSON
-        # - Download files and transform them
-        # - Query database and aggregate results
-        # - Scrape web pages and extract data
-        for i in range(BATCH_SIZE):
+        # TODO: Replace range(10) with your actual work items
+        # Example: for item_id in get_pending_items():
+        for item_id in range(10):
             try:
-                # TODO: Replace fetch_resource with your function
-                data = fetch_resource(i)
+                # Fetch with automatic retries
+                data = fetch_data(item_id)
 
-                # TODO: Add your processing logic here
-                # processed_data = transform(data)
-                # validated_data = validate(processed_data)
+                # Process the data
+                result = process_data(data)
 
-                # Write to temp file (automatically cleaned up)
+                # TODO: Do something with the result
+                # Example: send_email(result) or save_to_db(result)
                 with temp_path.open("a") as f:
-                    f.write(data + "\n")
+                    f.write(str(result) + "\n")
+
                 processed += 1
-                logger.debug(f"Processed item {i}")
+                logger.debug(f"Processed item {item_id}")
+
             except Exception as e:
-                logger.warning(f"Failed to process item {i} after retries: {e}")
+                logger.warning(f"Failed item {item_id}: {e}")
                 failed += 1
 
-        # TODO: Add post-processing steps
-        # - Aggregate results from temp files
-        # - Generate summaries or statistics
-        # - Prepare data for upload/export
-
-    # ========================================================================
-    # STEP 2: CALCULATE & LOG RESULTS
-    # ========================================================================
     duration_sec = time.time() - start_time
     result = JobResult(processed, failed, duration_sec)
 
-    logger.info(
-        f"Job #{run_count} completed: processed={result.processed}, "
-        f"failed={result.failed}, duration={result.duration_sec:.2f}s"
-    )
+    logger.info(f"Job complete: {processed} processed, {failed} failed, {duration_sec:.2f}s")
 
     # ========================================================================
-    # STEP 3: WRITE OUTPUT FILES
+    # SAVE RESULTS
     # ========================================================================
-    # TODO: Customize output format (CSV, JSON, PDF, etc.)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    report_file = OUTPUT_DIR / REPORT_FILENAME
 
-    # TODO: Generate your custom report format
-    report_content = (
-        f"Run #{run_count}\n"
-        f"Processed: {result.processed}\n"
-        f"Failed: {result.failed}\n"
+    # Write summary report
+    output_dir = Path("output")  # TODO: Change output path if needed
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report = output_dir / "summary.txt"
+    report.write_text(
+        f"Processed: {result.processed}, Failed: {result.failed}, "
         f"Duration: {result.duration_sec:.2f}s\n"
-        # TODO: Add more report sections:
-        # f"Total Size: {result.total_size_bytes} bytes\n"
-        # f"Success Rate: {result.processed/(result.processed+result.failed)*100:.1f}%\n"
     )
-    report_file.write_text(report_content, encoding="utf-8")
-    logger.info(f"Report written to {report_file}")
+    logger.info(f"Report saved to {report}")
 
-    # ========================================================================
-    # STEP 4: SAVE STATE TO DATABASE
-    # ========================================================================
-    # TODO: Customize what state you persist
+    # Save to database
     cur.execute(
-        "INSERT INTO runs (status, processed, failed, duration_sec) "
-        "VALUES (?, ?, ?, ?)",
+        "INSERT INTO runs (status, processed, failed, duration_sec) VALUES (?, ?, ?, ?)",
         ("completed", result.processed, result.failed, result.duration_sec),
     )
     conn.commit()
-    logger.info(f"State saved to {STATE_DB}")
 
     # ========================================================================
-    # STEP 5: NOTIFICATIONS (Optional)
+    # RESCHEDULE
     # ========================================================================
-    # TODO: Add notification logic
-    # if result.failed > result.processed * 0.5:
-    #     send_alert_email(f"High failure rate: {result.failed} failures")
-    #
-    # if run_count % 10 == 0:
-    #     send_summary_notification(get_stats_from_db())
-
-    # ========================================================================
-    # STEP 6: SCHEDULE NEXT RUN
-    # ========================================================================
-    scheduler.enter(RUN_INTERVAL_SEC, 1, job)
-    logger.info(f"Job completed. Next run in {RUN_INTERVAL_SEC} seconds.")
+    # TODO: Change interval (in seconds)
+    interval = 3600  # Run every hour
+    scheduler.enter(interval, 1, job)
+    logger.info(f"Next run in {interval} seconds")
 
 
 # ============================================================================
-# STARTUP & SHUTDOWN
+# START
 # ============================================================================
 if __name__ == "__main__":
-    # TODO: Add startup checks
-    # - Verify credentials/API keys
-    # - Check network connectivity
-    # - Validate configuration
-    # - Load previous state from DB if resuming
+    logger.info("Automation started")
 
-    logger.info("Automation script started. First job in {FIRST_RUN_DELAY_SEC} seconds...")
-    scheduler.enter(FIRST_RUN_DELAY_SEC, 1, job)
+    # TODO: Change initial delay (in seconds)
+    initial_delay = 5
+
+    scheduler.enter(initial_delay, 1, job)
 
     try:
         scheduler.run()
     except KeyboardInterrupt:
-        logger.info("Received interrupt signal. Shutting down gracefully...")
+        logger.info("Stopping...")
     finally:
-        # Cleanup on exit
         conn.close()
-        logger.info(
-            f"Script shutdown complete. Check '{OUTPUT_DIR}' and '{STATE_DB}' for results."
-        )
-
-        # TODO: Add final cleanup tasks
-        # - Upload final reports to S3
-        # - Send shutdown notification
-        # - Archive old logs
+        logger.info("Shutdown complete")
